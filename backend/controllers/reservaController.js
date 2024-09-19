@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
-import { pool } from "../db.js";
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY;

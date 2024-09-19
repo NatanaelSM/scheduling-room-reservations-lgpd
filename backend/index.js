@@ -1,20 +1,34 @@
 import express from "express";
 import cors from "cors";
 import userRoutes from "./routes/users.js";
-import reservaRoutes from "./routes/reservas.js";
 import loginRoutes from "./routes/login.js";
+import reservaRoutes from "./routes/reservas.js";
 import bodyParser from "body-parser";
 import 'dotenv/config';
+import { databaseInit } from "./db.js";
 
+const serverInit = () => {
+    const app = express();
+    app.use(bodyParser.json());
+    app.use(express.json());
+    app.use(cors());
 
-const app = express();
+    app.use("/", userRoutes);
+    app.use("/", loginRoutes);
+    app.use("/", reservaRoutes);
 
-app.use(bodyParser.json());
-app.use(express.json())
-app.use(cors())
+    app.listen(8800, () => {
+        console.log("Servidor rodando na porta 8800");
+    });
+}
 
-app.use("/", userRoutes);
-app.use("/", reservaRoutes);
-app.use("/", loginRoutes);
+const main = async () => {
+    try {
+        await databaseInit();
+        serverInit();
+    } catch (error) {
+        console.error("Erro ao obter dados:", error);
+    }
+}
 
-app.listen(8800)
+main();

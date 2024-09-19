@@ -1,83 +1,28 @@
-import mariadb from "mariadb";
+import { MongoClient } from "mongodb";
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const PASSWORD_DB = process.env.PASSWORD_DB;
+const usuarioCluster = process.env.USER_MONGODB_CLUSTER;
+const senhaUsuarioCluster = process.env.PASSWORD_USER_MONGODB_CLUSTER;
+const uri = `mongodb+srv://${usuarioCluster}:${senhaUsuarioCluster}@cluster-lgpd.qclwz.mongodb.net/?retryWrites=true&w=majority&appName=cluster-lgpd`;
+let database;
 
-const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: PASSWORD_DB,
-    port: 3307,
-    connectionLimit: 3 // Limite de conexões no pool
-};
+export const client = new MongoClient(uri);
 
-let pool;
-
-const createDatabaseIfNotExist = async () => {
+export const databaseInit = async () => {
     try {
-        const conn = await pool.getConnection();
-        await conn.query(`CREATE DATABASE IF NOT EXISTS soii`);
-        console.log("Banco de dados verificado/criado com sucesso");
-    } catch (err) {
-        console.error("Erro ao criar o banco de dados:", err);
+        await client.connect();
+        database = client.db("db_lgpd");
+        console.log("Conexão com MongoDB estabelecida.");
+    } catch (error) {
+        console.error("Erro ao conectar no MongoDB:", error);
+        throw error;
     }
-};
+}
 
-const createTablesIfNotExist = async () => {
-    const createUsuarioTableQuery = `
-        CREATE TABLE IF NOT EXISTS usuario (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(255),
-            usuario VARCHAR(255),
-            senha VARCHAR(255)
-        );
-    `;
-
-    const createReservaTableQuery = `
-        CREATE TABLE IF NOT EXISTS reserva (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome_sala VARCHAR(250), 
-            local_sala VARCHAR(250), 
-            data_uso DATE, 
-            hora_inicio_uso TIME, 
-            hora_final_uso TIME, 
-            responsavel VARCHAR(250),
-            motivo_uso VARCHAR(450),
-            info_gerais VARCHAR(450), 
-            convidados VARCHAR(250), 
-            usuario_id INT NOT NULL,
-            FOREIGN KEY (usuario_id) REFERENCES usuario(id)
-        );`;
-
-    try {
-        const conn = await pool.getConnection();
-        await conn.query(createUsuarioTableQuery);
-        await conn.query(createReservaTableQuery);
-        console.log("Tabelas verificadas/criadas com sucesso");
-    } catch (err) {
-        console.error("Erro ao criar as tabelas:", err);
+export const getDB = async () => {
+    if (!database) {
+        throw new Error("A conexão com o banco de dados não foi estabelecida.");
     }
-};
-
-const initializeDatabase = async () => {
-    pool = mariadb.createPool({
-        ...dbConfig
-    });
-
-    await createDatabaseIfNotExist();
-    pool = mariadb.createPool({
-        ...dbConfig,
-        database: 'soii'
-    });
-
-    await createTablesIfNotExist();
-};
-
-const init = async () => {
-    await initializeDatabase();
-};
-
-init().catch(err => console.error("Erro ao inicializar o banco de dados:", err));
-
-export { pool };
+    return database;
+}

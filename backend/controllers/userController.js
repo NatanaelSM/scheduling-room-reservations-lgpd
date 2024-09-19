@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import { pool } from "../db.js";
 
 export const getUsers = async (req, res) => {
 

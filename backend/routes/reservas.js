@@ -7,4 +7,3 @@ router.post("/addReserva", addReserva);
 router.get("/reservas", getReservas);
 
 export default router;
-
