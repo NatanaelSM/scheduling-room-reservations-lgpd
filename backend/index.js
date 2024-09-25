@@ -6,6 +6,7 @@ import reservaRoutes from "./routes/reservas.js";
 import bodyParser from "body-parser";
 import 'dotenv/config';
 import { databaseInit } from "./db.js";
+import { getDB } from "./db.js";
 
 const serverInit = () => {
     const app = express();
@@ -26,6 +27,13 @@ const main = async () => {
     try {
         await databaseInit();
         serverInit();
+
+        // const db = getDB()
+        // const termos = db.collection("termos_de_uso")
+        // const docref = await termos.findOne()
+        // console.log(docref);
+        
+        
     } catch (error) {
         console.error("Erro ao obter dados:", error);
     }

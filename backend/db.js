@@ -21,6 +21,7 @@ export const databaseInit = async () => {
 }
 
 export const getDB = async () => {
+    
     if (!database) {
         throw new Error("A conexão com o banco de dados não foi estabelecida.");
     }
