@@ -25,7 +25,6 @@ export function Login({ setToken }) {
 
     return (
         <Flex justifyContent='center' alignItems='center' w='100%' h='100vh'>
-
             <Flex
                 bg='#07012C'
                 w='30rem'

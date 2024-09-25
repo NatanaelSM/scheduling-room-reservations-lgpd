@@ -1,18 +1,22 @@
 import bcrypt from 'bcrypt';
 import jwt from "jsonwebtoken";
 import * as dotenv from 'dotenv';
+import {getDB} from "../db.js";
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export const addLogin = async (req, res) => {
     const { usuario, senha } = req.body;
-    const q = "SELECT * FROM usuario WHERE usuario = ?";
 
-    let conn = await pool.getConnection()
+    const db = await getDB();
+    const usuarios = db.collection("usuarios");
 
     try {
-        const result = await conn.query(q, [usuario]);
+        const query = {usuario: usuario}
+        const result = await usuarios.find(query).toArray();
+        console.log(result);
+        
 
         if (result.length === 0) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
@@ -27,10 +31,10 @@ export const addLogin = async (req, res) => {
 
         const token = jwt.sign({ id: resultUsuario.id }, SECRET_KEY, { expiresIn: '1h' });
         res.json({ token });
+
     } catch (err) {
         console.error("Erro no banco de dados:", err);
         return res.status(500).json({ error: "Erro no servidor!" });
-    } finally {
-        if (conn) conn.release();
     }
+
 };

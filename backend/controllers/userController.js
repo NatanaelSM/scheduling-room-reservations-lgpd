@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { getDB } from "../db.js";
 
 export const getUsers = async (req, res) => {
 
@@ -33,18 +34,21 @@ export const getUserById = async (req, res) => {
 
 export const addUser = async (req, res) => {
 
-    const { nome, usuario, senha } = req.body;
-    const q = "INSERT INTO usuario(`nome`, `senha`, `usuario`) VALUES (?, ?, ?)";
-    let conn = await pool.getConnection()
+    const { nome, usuario, senha } = req.body
+    const db = await getDB();
+    const usuarios = db.collection("usuarios");
 
     try {
         const hash = await bcrypt.hash(senha, 10);
-        await conn.query(q, [nome, hash, usuario]);
+        await usuarios.insertOne({
+            nome: nome,
+            usuario: usuario,
+            senha: hash
+        });
         res.status(201).send('Usuário criado com sucesso!');
     } catch (err) {
         console.error("Erro no banco de dados:", err);
         res.status(500).send("Erro no servidor!");
-    }finally {
-        if (conn) conn.release();
     }
+
 };
