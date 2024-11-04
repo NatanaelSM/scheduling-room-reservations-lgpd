@@ -37,6 +37,8 @@ export const addUser = async (req, res) => {
     const { nome, usuario, senha } = req.body
     const db = await getDB();
     const usuarios = db.collection("usuarios");
+    const termosDeUso = db.collection("termos_de_uso")
+    const termoDeUsoAtual = await termosDeUso.findOne({"ativo": true})
 
     try {
         const hash = await bcrypt.hash(senha, 10);
