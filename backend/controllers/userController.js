@@ -3,38 +3,43 @@ import { getDB } from "../db.js";
 
 export const getUsers = async (req, res) => {
 
-    const q = "SELECT * FROM usuario";
-    let conn = await pool.getConnection()
-
     try {
-        const rows = await conn.query(q);
-        res.status(200).json(rows);
+        const db = await getDB();
+        const collection = db.collection("usuarios");
+
+        const users = await collection.find({}).toArray();
+        res.status(200).json(users);
     } catch (err) {
         res.json(err);
-    }finally {
-        if (conn) conn.release();
+    } finally {
+        await client.close();
     }
 };
 
 export const getUserById = async (req, res) => {
 
-    const q = "SELECT * FROM usuario WHERE id = ?";
-    const id = req.params.id;
-    let conn = await pool.getConnection()
-
     try {
-        const rows = await conn.query(q, [id]);
-        res.status(200).json(rows);
+        await client.connect();
+        const db = await getDB();
+        const collection = db.collection("usuarios");
+
+        const user = await collection.findOne({ _id: new ObjectId(id) });
+
+        if (user) {
+            res.status(200).json(user);
+        } else {
+            res.status(404).json({ message: "Usuário não encontrado" });
+        }
     } catch (err) {
         res.json(err);
-    }finally {
-        if (conn) conn.release();
+    } finally {
+        await client.close();
     }
 };
 
 export const addUser = async (req, res) => {
 
-    const { nome, usuario, senha } = req.body
+    const { nome, usuario, data_nascimento, doc_cpf, email, senha } = req.body
     const db = await getDB();
     const usuarios = db.collection("usuarios");
 
@@ -43,6 +48,9 @@ export const addUser = async (req, res) => {
         await usuarios.insertOne({
             nome: nome,
             usuario: usuario,
+            data_nascimento: data_nascimento,
+            doc_cpf: doc_cpf,
+            email: email,
             senha: hash
         });
         res.status(201).send('Usuário criado com sucesso!');
