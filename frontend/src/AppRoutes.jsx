@@ -5,6 +5,7 @@ import { Login } from "./pages/Login";
 import { useState, useEffect } from "react";
 import { PageLayout } from "./layout";
 import {jwtDecode} from "jwt-decode";
+import { CadastroUsuario } from "./components/FormAddUser";
 
 const isTokenValid = (token) => {
     if (!token) return false;
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={!isAuthenticated ? <Login setToken={setToken} /> : <Navigate replace to="/home" />} />
+                <Route path="/criar-usuario" element={<CadastroUsuario/>}/>
                 <Route path="/" element={<PageLayout handleLogout={handleLogout} />}>
                     <Route path="/home" element={isAuthenticated ? <Home token={token} /> : <Navigate replace to="/login" />} />
                     <Route path="/reserva" element={isAuthenticated ? <Reserva token={token} /> : <Navigate replace to="/login" />} />
