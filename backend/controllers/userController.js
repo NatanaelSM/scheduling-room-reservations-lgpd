@@ -18,8 +18,9 @@ export const getUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
 
+    const { id } = req.params; // Assumindo que o `id` é enviado na URL, ex: /usuarios/:id
+
     try {
-        await client.connect();
         const db = await getDB();
         const collection = db.collection("usuarios");
 
@@ -31,9 +32,7 @@ export const getUserById = async (req, res) => {
             res.status(404).json({ message: "Usuário não encontrado" });
         }
     } catch (err) {
-        res.json(err);
-    } finally {
-        await client.close();
+        res.status(500).json({ message: "Erro ao buscar usuário", error: err });
     }
 };
 
