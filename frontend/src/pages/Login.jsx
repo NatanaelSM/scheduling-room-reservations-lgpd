@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Flex, Heading, Box, FormControl, FormLabel, Input, Button } from "@chakra-ui/react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 export function Login({ setToken }) {
     const [usuario, setUsuario] = useState('');
     const [senha, setSenha] = useState('');
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,6 +24,10 @@ export function Login({ setToken }) {
             console.error('Erro na rota!');
         }
     };
+
+    const handleClick = () => {
+        navigate('/criar-usuario'); 
+      };
 
     return (
         <Flex justifyContent='center' alignItems='center' w='100%' h='100vh'>
@@ -44,7 +50,7 @@ export function Login({ setToken }) {
                             <FormControl isRequired>
                                 <FormLabel color='white'>Usuário</FormLabel>
                                 <Input
-                                    placeholder="Usuario0102"
+                                    placeholder=""
                                     type='text'
                                     value={usuario}
                                     onChange={(e) => setUsuario(e.target.value)}
@@ -64,8 +70,11 @@ export function Login({ setToken }) {
                         </Box>
 
                         <Flex justifyContent='center' alignItems='center'>
-                            <Button mt={4} colorScheme='green' type='submit'>
+                            <Button mt={4} colorScheme='blue' type='submit' marginRight={5}>
                                 Entrar
+                            </Button>
+                            <Button mt={4} colorScheme='green' type='button' onClick={handleClick}>
+                                Criar nova conta
                             </Button>
                         </Flex>
                     </form>
