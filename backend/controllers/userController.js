@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 dotenv.config();
 import { ObjectId } from 'mongodb';
+import { getTermoAtual } from "../utils/getTermoAtual.js";
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
@@ -24,9 +25,6 @@ export const getUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     const token = req.headers['authorization'];
-
-    const db = await getDB();
-    const collection = db.collection("usuarios");
 
     jwt.verify(token, SECRET_KEY, async (err, decoded) => {
         if (err) return res.status(401).json({ message: 'Token inválido' });

@@ -20,6 +20,7 @@ export function CadastroUsuario() {
   const email = useRef<HTMLInputElement>(null);
   const usuario = useRef<HTMLInputElement>(null);
   const senha = useRef<HTMLInputElement>(null);
+  const check_termo_opcional_1 = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const openModal = () => setIsOpen(true);
@@ -27,14 +28,14 @@ export function CadastroUsuario() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (
       nome.current &&
       data_nascimento.current &&
       doc_cpf.current &&
       email.current &&
       usuario.current &&
-      senha.current
+      senha.current &&
+      check_termo_opcional_1.current
     ) {
       const dadosUsuario = {
         nome: nome.current.value,
@@ -43,6 +44,7 @@ export function CadastroUsuario() {
         email: email.current.value,
         usuario: usuario.current.value,
         senha: senha.current.value,
+        aceite_termo_opcional_1: check_termo_opcional_1.current.checked,
       };
 
       try {
@@ -58,6 +60,7 @@ export function CadastroUsuario() {
         email.current.value = "";
         usuario.current.value = "";
         senha.current.value = "";
+        check_termo_opcional_1.current.checked = false;
       } catch (error) {
         console.log("Erro ao cadastrar usuário: ", error);
       }
@@ -130,11 +133,18 @@ export function CadastroUsuario() {
               alignItems="start"
               flexDirection="column"
             >
-              <Checkbox variant={"solid"}>
-                Li e concordo com os{" "}
-                <Link color="blue" onClick={openModal}>Termos de Uso e Políticas de Privacidade</Link>.
+              <FormControl isRequired>
+                <Checkbox variant={"solid"}>
+                  Li e concordo com os{" "}
+                  <Link color="blue" onClick={openModal}>
+                    Termos de Uso e Políticas de Privacidade
+                  </Link>
+                  .
+                </Checkbox>
+              </FormControl>
+              <Checkbox ref={check_termo_opcional_1} variant={"solid"}>
+                Termo opcional 1.
               </Checkbox>
-              <Checkbox variant={"solid"}>Termo opcional 1.</Checkbox>
             </Flex>
 
             <Flex justifyContent="center" alignItems="center">
