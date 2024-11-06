@@ -4,9 +4,9 @@ import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 dotenv.config();
 import { ObjectId } from 'mongodb';
+import { getTermoAtual } from "../utils/getTermoAtual.js";
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY;
-
 
 export const getUsers = async (req, res) => {
 
@@ -25,8 +25,6 @@ export const getUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     const token = req.headers['authorization'];
-
-    if (!token) return res.status(401).json({ message: "Token não fornecido!" });
 
     jwt.verify(token, SECRET_KEY, async (err, decoded) => {
         if (err) return res.status(401).json({ message: 'Token inválido' });
@@ -52,15 +50,17 @@ export const getUserById = async (req, res) => {
 
 export const addUser = async (req, res) => {
 
-    const { nome, usuario, data_nascimento, doc_cpf, email, senha } = req.body
-    const db = await getDB();
-    const usuarios = db.collection("usuarios");
-    const termosDeUso = db.collection("termos_de_uso")
-    const termoDeUsoAtual = await termosDeUso.findOne({"ativo": true})
+    const { nome, usuario, data_nascimento, doc_cpf, email, senha, aceite_termo_opcional_1 } = req.body
+
+    const db = await getDB()
+
+    const usuarios = db.collection("usuarios")
+    const aceitacaoTermos = db.collection("aceitacao_termos_de_uso")
 
     try {
+
         const hash = await bcrypt.hash(senha, 10);
-        await usuarios.insertOne({
+        const usuarioCriado = await usuarios.insertOne({
             nome: nome,
             usuario: usuario,
             data_nascimento: data_nascimento,
@@ -68,6 +68,17 @@ export const addUser = async (req, res) => {
             email: email,
             senha: hash
         });
+
+        const termoAtual = await getTermoAtual()
+
+        await aceitacaoTermos.insertOne({
+            usuario_id: usuarioCriado.insertedId,
+            versao_termo: termoAtual.versao,
+            aceite_termos_obrigatorios: true,
+            aceite_termo_opcional_1: aceite_termo_opcional_1,
+            data_aceitacao: new Date()
+        })
+        
         res.status(201).send('Usuário criado com sucesso!');
     } catch (err) {
         console.error("Erro no banco de dados:", err);

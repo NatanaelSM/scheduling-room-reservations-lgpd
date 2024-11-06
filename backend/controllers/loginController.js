@@ -15,8 +15,6 @@ export const addLogin = async (req, res) => {
     try {
         const query = {usuario: usuario}
         const result = await usuarios.find(query).toArray();
-        console.log(result);
-        
 
         if (result.length === 0) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
