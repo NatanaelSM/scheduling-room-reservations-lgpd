@@ -13,10 +13,11 @@ export function Usuario({ token }) {
 
     const fetchUsuario = async () => {
         try {
-            const req = await axios.get('http://localhost:8800/usuario/:id', { 
+            const req = await axios.get(`http://localhost:8800/getUsuario`, { 
                 headers: { Authorization: token },
                 
             });
+            console.log(req.data);
             const usuario = req.data;
             setUsuario(usuario);
         } catch (error) {
