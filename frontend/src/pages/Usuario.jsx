@@ -5,7 +5,7 @@ import { CardUsuario } from "../components/CardUsuario";
 
 
 export function Usuario({ token }) {
-    const [usuario, setUsuario] = useState([]);
+    const [usuario, setUsuario] = useState(null);
 
     useEffect(() => {
         fetchUsuario();
@@ -13,14 +13,14 @@ export function Usuario({ token }) {
 
     const fetchUsuario = async () => {
         try {
-            const req = await axios.get('http://localhost:8800/usuario/:id', {
+            const req = await axios.get('http://localhost:8800/usuario/:id', { 
                 headers: { Authorization: token },
+                
             });
             const usuario = req.data;
             setUsuario(usuario);
         } catch (error) {
-            console.log("erro");
-
+            console.log("erro ao buscar usuário", error);
         }
     };
 
