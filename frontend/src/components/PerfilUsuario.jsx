@@ -1,7 +1,8 @@
 import { Flex, Heading } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
-export function PerfilUsuario({ nomeUsuario }) {
+export function PerfilUsuario({ nomeUsuario, direcionar }) {
     const [iniciais, setIniciais] = useState('');
 
     useEffect(() => {

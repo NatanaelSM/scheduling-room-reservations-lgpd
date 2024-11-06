@@ -1,5 +1,11 @@
 import bcrypt from "bcrypt";
 import { getDB } from "../db.js";
+import jwt from 'jsonwebtoken';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const SECRET_KEY = process.env.JWT_SECRET_KEY;
+
 
 export const getUsers = async (req, res) => {
 
@@ -17,13 +23,22 @@ export const getUsers = async (req, res) => {
 };
 
 export const getUserById = async (req, res) => {
+    const token = req.headers['authorization'];
 
+    if (!token) return res.status(401).json({ message: "Token não fornecido!" });
+
+    jwt.verify(token,  SECRET_KEY, async (err, decoded) => {
+        if (err) return res.status(401).json({ message: 'Token inválido' });
+    
     try {
-        await client.connect();
+
+        const id = decoded.id;
+
         const db = await getDB();
         const collection = db.collection("usuarios");
 
-        const user = await collection.findOne({ _id: new ObjectId(id) });
+        // Busca o usuário pelo `id`
+        const user = await collection.findOne({id: id});
 
         if (user) {
             res.status(200).json(user);
@@ -31,10 +46,8 @@ export const getUserById = async (req, res) => {
             res.status(404).json({ message: "Usuário não encontrado" });
         }
     } catch (err) {
-        res.json(err);
-    } finally {
-        await client.close();
-    }
+        res.status(401).json({ message: "Token inválido ou expirado", error: err });
+    }})
 };
 
 export const addUser = async (req, res) => {
