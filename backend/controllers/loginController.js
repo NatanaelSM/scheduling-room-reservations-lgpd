@@ -27,7 +27,7 @@ export const addLogin = async (req, res) => {
             return res.status(401).json({ error: 'Senha inválida.' });
         }
 
-        const token = jwt.sign({ id: resultUsuario.id }, SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ id: resultUsuario._id }, SECRET_KEY, { expiresIn: '1h' });
         res.json({ token });
 
     } catch (err) {

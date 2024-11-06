@@ -1,6 +1,11 @@
 import bcrypt from "bcrypt";
 import { getDB } from "../db.js";
-import { getTermoAtual } from "../utils/getTermoAtual.js";
+import jwt from 'jsonwebtoken';
+import * as dotenv from 'dotenv';
+dotenv.config();
+import { ObjectId } from 'mongodb';
+
+const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export const getUsers = async (req, res) => {
 
@@ -18,23 +23,31 @@ export const getUsers = async (req, res) => {
 };
 
 export const getUserById = async (req, res) => {
+    const token = req.headers['authorization'];
 
-    try {
-        const db = await getDB();
-        const collection = db.collection("usuarios");
+    const db = await getDB();
+    const collection = db.collection("usuarios");
 
-        const user = await collection.findOne({ _id: new ObjectId(id) });
+    jwt.verify(token, SECRET_KEY, async (err, decoded) => {
+        if (err) return res.status(401).json({ message: 'Token inválido' });
 
-        if (user) {
-            res.status(200).json(user);
-        } else {
-            res.status(404).json({ message: "Usuário não encontrado" });
+        try {
+            const id = decoded.id; // Supondo que o ID esteja no token JWT
+            const db = await getDB();
+            const usuarios = db.collection("usuarios");
+
+            // Converte o `id` para `ObjectId` e busca pelo `_id`
+            const user = await usuarios.findOne({ _id: new ObjectId(id) });
+            
+            if (user) {
+                res.status(200).json(user);
+            } else {
+                res.status(404).json({ message: "Usuário não encontrado" });
+            }
+        } catch (err) {
+            res.status(500).json({ message: "Erro ao buscar usuário", error: err });
         }
-    } catch (err) {
-        res.json(err);
-    } finally {
-        await client.close();
-    }
+    });
 };
 
 export const addUser = async (req, res) => {

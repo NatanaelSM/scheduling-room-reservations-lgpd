@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Home } from './pages/Home';
+import { Usuario } from './pages/Usuario';
 import { Reserva } from './pages/Reserva';
 import { Login } from "./pages/Login";
 import { useState, useEffect } from "react";
@@ -46,8 +47,8 @@ export function AppRoutes() {
                 <Route path="/criar-usuario" element={<CadastroUsuario/>}/>
                 <Route path="/" element={<PageLayout handleLogout={handleLogout} />}>
                     <Route path="/home" element={isAuthenticated ? <Home token={token} /> : <Navigate replace to="/login" />} />
-                    <Route path="/reserva" element={isAuthenticated ? <Reserva token={token} /> : <Navigate replace to="/login" />} />
-                    <Route path="/" element={<Navigate replace to={isAuthenticated ? "/home" : "/login"} />} />
+                    <Route path="/usuario" element={isAuthenticated ? <Usuario token={token} /> : <Navigate replace to="/login" />} />
+                    <Route path="/reserva" element={isAuthenticated ? <Reserva token={token} /> : <Navigate replace to="/login" />} />                    <Route path="/" element={<Navigate replace to={isAuthenticated ? "/home" : "/login"} />} />
                 </Route>
             </Routes>
         </BrowserRouter>
