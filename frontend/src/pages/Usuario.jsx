@@ -28,7 +28,7 @@ export function Usuario({ token }) {
     return (
         <>
             <Flex wrap='wrap' px='6rem' mt='4rem' justifyContent={"center"}>
-                {usuario && <CardUsuario usuario={usuario} />}
+                {usuario && <CardUsuario usuario={usuario} id={usuario.id} token={token}/>}
             </Flex>
         </>
     );
