@@ -95,10 +95,9 @@ export const deleteUser = async (req, res) => {
             const id = decoded.id;
             const db = await getDB();
             const usuarios = db.collection("usuarios");
-            const usuario = await usuarios.findOne({_id: new ObjectId(id) });
 
             
-            const deleteUserResult = await usuario.deleteOne({ _id: ObjectId(id) });
+            const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
             
             if (deleteUserResult.deletedCount === 0) {
                 return res.status(404).json({ message: "Usuário não encontrado" });

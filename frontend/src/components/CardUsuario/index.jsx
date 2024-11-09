@@ -18,16 +18,23 @@ import {
 } from "@chakra-ui/react";
 import { PerfilUsuario } from "../PerfilUsuario";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import React from "react";
 
-export function CardUsuario({ usuario, id, handleDelete, token }) {
+export function CardUsuario({ usuario, id, token, handleLogout }) {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
+    const navigate = useNavigate();
 
     const handleConfirmDelete = async () => {
         try {
-            await axios.delete(`http://localhost:8800/deleteUsuario`, {
+            await axios.delete(`http://localhost:8800/deleteUsuario/${id}`, {
                 headers: { Authorization: token },
             });
+
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+
             toast({
                 title: "Usuário excluído",
                 description: "O usuário foi excluído com sucesso.",
@@ -35,8 +42,9 @@ export function CardUsuario({ usuario, id, handleDelete, token }) {
                 duration: 3000,
                 isClosable: true,
             });
-            onClose();
-            handleDelete(usuario.id); 
+
+            navigate("/");
+
         } catch (error) {
             console.error("Erro ao excluir usuário:", error);
             toast({
@@ -48,6 +56,7 @@ export function CardUsuario({ usuario, id, handleDelete, token }) {
             });
         }
     };
+
 
     return (
         <Card w="30rem" mx="1rem" mb="2rem">
@@ -81,7 +90,10 @@ export function CardUsuario({ usuario, id, handleDelete, token }) {
                                 <Button mr={3} onClick={onClose}>
                                     Cancelar
                                 </Button>
-                                <Button colorScheme="red" onClick={handleConfirmDelete}>
+                                <Button colorScheme="red" onClick={async () => {
+                                    handleLogout
+                                    await handleConfirmDelete();
+                                }}>
                                     Excluir
                                 </Button>
                             </ModalFooter>

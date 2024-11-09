@@ -8,10 +8,12 @@ import {
   Input,
   Checkbox,
   Link,
+  useToast,
 } from "@chakra-ui/react";
 import axios from "axios";
 import React, { useState, useRef } from "react";
 import { ModalTermos } from "../ModalTermos/Index";
+import { useNavigate } from "react-router-dom";
 
 export function CadastroUsuario() {
   const nome = useRef<HTMLInputElement>(null);
@@ -22,6 +24,8 @@ export function CadastroUsuario() {
   const senha = useRef<HTMLInputElement>(null);
   const check_termo_opcional_1 = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const toast = useToast();
+  const navigate = useNavigate();
 
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
@@ -53,7 +57,15 @@ export function CadastroUsuario() {
           dadosUsuario
         );
 
-        // Limpar os campos após a submissão
+        toast({
+          title: "Usuário criado",
+          description: "O usuário foi criado com sucesso.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        
+
         nome.current.value = "";
         data_nascimento.current.value = "";
         doc_cpf.current.value = "";
@@ -61,8 +73,17 @@ export function CadastroUsuario() {
         usuario.current.value = "";
         senha.current.value = "";
         check_termo_opcional_1.current.checked = false;
+
+        navigate("/login");
       } catch (error) {
-        console.log("Erro ao cadastrar usuário: ", error);
+        console.error("Erro ao cadastrar usuário:", error);
+        toast({
+          title: "Erro",
+          description: "Houve um erro ao cadastrar o usuário.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
       }
     } else {
       console.error("Algum campo está nulo.");
