@@ -95,7 +95,10 @@ export const deleteUser = async (req, res) => {
             const id = decoded.id;
             const db = await getDB();
             const usuarios = db.collection("usuarios");
+            const usuarioApagado = db.collection("id_usuarios_apagados")
 
+            // Insere o id do usuário deletado na collection "id_usuarios_apagados"
+            await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
             
             const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
             

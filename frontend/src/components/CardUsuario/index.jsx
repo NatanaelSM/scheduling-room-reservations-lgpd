@@ -18,7 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { PerfilUsuario } from "../PerfilUsuario";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import React from "react";
 
 export function CardUsuario({ usuario, id, token, handleLogout }) {
@@ -43,7 +43,7 @@ export function CardUsuario({ usuario, id, token, handleLogout }) {
                 isClosable: true,
             });
 
-            navigate("/");
+            navigate("/"); 
 
         } catch (error) {
             console.error("Erro ao excluir usuário:", error);
@@ -90,12 +90,14 @@ export function CardUsuario({ usuario, id, token, handleLogout }) {
                                 <Button mr={3} onClick={onClose}>
                                     Cancelar
                                 </Button>
-                                <Button colorScheme="red" onClick={async () => {
-                                    handleLogout
-                                    await handleConfirmDelete();
-                                }}>
-                                    Excluir
-                                </Button>
+                                <Link
+                                onClick={handleLogout}>
+                                    <Button colorScheme="red" onClick={async () => {
+                                        await handleConfirmDelete();
+                                    }}>
+                                        Excluir
+                                    </Button>
+                                </Link>
                             </ModalFooter>
                         </ModalContent>
                     </Modal>
