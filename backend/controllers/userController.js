@@ -18,8 +18,6 @@ export const getUsers = async (req, res) => {
         res.status(200).json(users);
     } catch (err) {
         res.json(err);
-    } finally {
-        await client.close();
     }
 };
 
@@ -84,5 +82,33 @@ export const addUser = async (req, res) => {
         console.error("Erro no banco de dados:", err);
         res.status(500).send("Erro no servidor!");
     }
+};
 
+
+export const deleteUser = async (req, res) => {
+    const token = req.headers['authorization'];
+    
+    jwt.verify(token, SECRET_KEY, async (err, decoded) => {
+        if (err) return res.status(403).json({ message: 'Token inválido' }); 
+
+        try {
+            const id = decoded.id;
+            const db = await getDB();
+            const usuarios = db.collection("usuarios");
+            const usuarioApagado = db.collection("id_usuarios_apagados")
+
+            // Insere o id do usuário deletado na collection "id_usuarios_apagados"
+            await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
+            
+            const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
+            
+            if (deleteUserResult.deletedCount === 0) {
+                return res.status(404).json({ message: "Usuário não encontrado" });
+            }
+
+            res.status(200).json({ message: "Usuário deletado com sucesso!" });
+        } catch (err) {
+            res.status(500).json({ message: "Erro no servidor ao deletar usuário", error: err });
+        }
+    });
 };
