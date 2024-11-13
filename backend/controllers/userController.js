@@ -89,28 +89,38 @@ export const deleteUser = async (req, res) => {
     const token = req.headers['authorization'];
     
     jwt.verify(token, SECRET_KEY, async (err, decoded) => {
-        if (err) return res.status(403).json({ message: 'Token inválido' }); 
-
-        try {
-            const id = decoded.id;
-            const db = await getDB();
-            const usuarios = db.collection("usuarios");
-            const usuarioApagado = db.collection("id_usuarios_apagados")
-
-            await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
-            
-            const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
-            
-            if (deleteUserResult.deletedCount === 0) {
-                return res.status(404).json({ message: "Usuário não encontrado" });
-            }
-
-            res.status(200).json({ message: "Usuário deletado com sucesso!" });
-        } catch (err) {
-            res.status(500).json({ message: "Erro no servidor ao deletar usuário", error: err });
+      if (err) return res.status(403).json({ message: 'Token inválido' });
+  
+      try {
+        const id = decoded.id;
+        const db = await getDB();
+        const usuarios = db.collection("usuarios");
+        const reservas = db.collection("reservas");
+        const usuarioApagado = db.collection("id_usuarios_apagados");
+  
+        const currentUser = await usuarios.findOne({ _id: new ObjectId(id) });
+  
+        if (!currentUser) {
+          return res.status(404).json({ message: "Usuário não encontrado" });
         }
+  
+        const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
+  
+        await reservas.deleteOne({ _id: id });
+  
+        await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
+
+        if (deleteUserResult.deletedCount === 0) {
+          return res.status(404).json({ message: "Usuário não encontrado" });
+        }
+  
+        res.status(200).json({ message: "Usuário deletado com sucesso!" });
+      } catch (err) {
+        res.status(500).json({ message: "Erro no servidor ao deletar usuário", error: err });
+      }
     });
-};
+  };
+    
 
 export const updateUser = async (req, res) => {
     const token = req.headers['authorization'];
@@ -130,8 +140,8 @@ export const updateUser = async (req, res) => {
                 return res.status(404).json({ message: "Usuário não encontrado" });
             }
 
-            const updatedFields = {};
-            const previousValues = {};
+            let updatedFields = {};
+            let previousValues = {};
 
             if (usuario && usuario !== currentUser.usuario) {
                 updatedFields.usuario = usuario;
@@ -191,7 +201,7 @@ const logAction = async (userId, action, details = {}) => {
         await user_logs.insertOne({
             userId: new ObjectId(userId),
             action: action,
-            timestamp: new Date(), // Corrigido para registrar a data atual
+            timestamp: new Date(),
             details: details
         });
         console.log("Log criado com sucesso.");

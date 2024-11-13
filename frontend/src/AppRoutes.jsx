@@ -5,8 +5,10 @@ import { Reserva } from './pages/Reserva';
 import { Login } from "./pages/Login";
 import { useState, useEffect } from "react";
 import { PageLayout } from "./layout";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { CadastroUsuario } from "./components/FormAddUser";
+import { CardUsuario } from "./components/CardUsuario";
+import { FormUpdateUser } from "./components/FormUpdateUser";
 
 const isTokenValid = (token) => {
     if (!token) return false;
@@ -44,11 +46,13 @@ export function AppRoutes() {
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={!isAuthenticated ? <Login setToken={setToken} /> : <Navigate replace to="/home" />} />
-                <Route path="/criar-usuario" element={<CadastroUsuario/>}/>
+                <Route path="/criar-usuario" element={<CadastroUsuario />} />
                 <Route path="/" element={<PageLayout handleLogout={handleLogout} />}>
                     <Route path="/home" element={isAuthenticated ? <Home token={token} /> : <Navigate replace to="/login" />} />
                     <Route path="/usuario" element={isAuthenticated ? <Usuario token={token} /> : <Navigate replace to="/login" />} />
-                    <Route path="/reserva" element={isAuthenticated ? <Reserva token={token} /> : <Navigate replace to="/login" />} />                    <Route path="/" element={<Navigate replace to={isAuthenticated ? "/home" : "/login"} />} />
+                    <Route path="/usuario/excluir" element={isAuthenticated ? <CardUsuario token={token} handleLogout={handleLogout}/> : <Navigate replace to="/login" />} />
+                    <Route path="/usuario/editar" element={isAuthenticated ? <FormUpdateUser token={token} /> : <Navigate replace to="/login" />} />
+                    <Route path="/reserva" element={isAuthenticated ? <Reserva token={token} /> : <Navigate replace to="/login" />} />  <Route path="/" element={<Navigate replace to={isAuthenticated ? "/home" : "/login"} />} />
                 </Route>
             </Routes>
         </BrowserRouter>
