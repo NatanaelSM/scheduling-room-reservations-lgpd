@@ -39,16 +39,18 @@ export function AppRoutes() {
         setToken('');
         localStorage.removeItem('token');
     }
+    
 
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/login" element={!isAuthenticated ? <Login setToken={setToken} /> : <Navigate replace to="/home" />} />
+                <Route path="/login" element={!isAuthenticated ? <Login setToken={setToken} /> : <Navigate replace to="/" />} />
                 <Route path="/criar-usuario" element={<CadastroUsuario/>}/>
                 <Route path="/" element={<PageLayout handleLogout={handleLogout} />}>
                     <Route path="/home" element={isAuthenticated ? <Home token={token} /> : <Navigate replace to="/login" />} />
-                    <Route path="/usuario" element={isAuthenticated ? <Usuario token={token} /> : <Navigate replace to="/login" />} />
-                    <Route path="/reserva" element={isAuthenticated ? <Reserva token={token} /> : <Navigate replace to="/login" />} />                    <Route path="/" element={<Navigate replace to={isAuthenticated ? "/home" : "/login"} />} />
+                    <Route path="/usuario" element={isAuthenticated ? <Usuario token={token} handleLogout={handleLogout} /> : <Navigate replace to="/login" />} />
+                    <Route path="/reserva" element={isAuthenticated ? <Reserva token={token} /> : <Navigate replace to="/login" />} />                  
+                    <Route path="/" element={<Navigate replace to={isAuthenticated ? "/home" : "/login"} />} />
                 </Route>
             </Routes>
         </BrowserRouter>

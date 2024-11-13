@@ -18,16 +18,18 @@ import {
 } from "@chakra-ui/react";
 import { PerfilUsuario } from "../PerfilUsuario";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import React from "react";
+import { useEffect } from "react";
 
-export function CardUsuario({ usuario, id, token, handleLogout }) {
+export function CardUsuario({ usuario, id, token }) {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
     const navigate = useNavigate();
 
     const handleConfirmDelete = async () => {
         try {
+
             await axios.delete(`http://localhost:8800/deleteUsuario/${id}`, {
                 headers: { Authorization: token },
             });
@@ -42,8 +44,7 @@ export function CardUsuario({ usuario, id, token, handleLogout }) {
                 duration: 3000,
                 isClosable: true,
             });
-
-            navigate("/"); 
+            navigate('/login');
 
         } catch (error) {
             console.error("Erro ao excluir usuário:", error);
@@ -56,6 +57,12 @@ export function CardUsuario({ usuario, id, token, handleLogout }) {
             });
         }
     };
+
+    useEffect(() => {
+        if (!token) {
+            navigate("/login");
+        }
+    }, [token]);
 
 
     return (
@@ -90,14 +97,12 @@ export function CardUsuario({ usuario, id, token, handleLogout }) {
                                 <Button mr={3} onClick={onClose}>
                                     Cancelar
                                 </Button>
-                                <Link
-                                onClick={handleLogout}>
-                                    <Button colorScheme="red" onClick={async () => {
-                                        await handleConfirmDelete();
-                                    }}>
-                                        Excluir
-                                    </Button>
-                                </Link>
+                                <Button colorScheme="red" onClick={async () => {
+                                    await handleConfirmDelete();
+                                    navigate('/login');
+                                }}>
+                                    Excluir
+                                </Button>
                             </ModalFooter>
                         </ModalContent>
                     </Modal>

@@ -96,6 +96,8 @@ export const deleteUser = async (req, res) => {
             const db = await getDB();
             const usuarios = db.collection("usuarios");
             const usuarioApagado = db.collection("id_usuarios_apagados")
+            const reservas = db.collection("reservas"); 
+
 
             // Insere o id do usuário deletado na collection "id_usuarios_apagados"
             await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
@@ -105,6 +107,8 @@ export const deleteUser = async (req, res) => {
             if (deleteUserResult.deletedCount === 0) {
                 return res.status(404).json({ message: "Usuário não encontrado" });
             }
+
+            await reservas.deleteMany({ usuario_id: id });
 
             res.status(200).json({ message: "Usuário deletado com sucesso!" });
         } catch (err) {
