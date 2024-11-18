@@ -1,36 +1,59 @@
-import { Flex } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { CardUsuario } from "../components/CardUsuario";
+import { Flex, Text } from "@chakra-ui/react";
+import { FaChevronRight } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
+export function Usuario() {
 
-export function Usuario({ token, handleLogout  }) {
-    const [usuario, setUsuario] = useState(null);
+  return (
+    <Flex
+      justifyContent='center'
+      alignItems='center'
+      h='85vh'>
+      <Flex
+        border='1px solid black'
+        h='20rem'
+        w='30rem'
+        bg='#07022C'
+        borderRadius='2rem'
+        flexDirection='column'
+        justifyContent='center'
+        alignItems='center'
+        gap='3rem'>
 
+        <Link style={{
+          color: "black",
+          textDecoration: 'none',
+          width: "70%",
+          height: "5rem",
+          display: "flex",
+          backgroundColor: "white",
+          justifyContent: "center",
+          alignItems: "center",
+          borderRadius: "0.5rem"
+        }}
+          to="/usuario/excluir">
+          <Text mr='9rem'>Excluir Usuário</Text>
+          <FaChevronRight />
+        </Link>
 
-    useEffect(() => {
-        fetchUsuario();
-    }, [token]);
+        <Link
+          style={{
+            color: "black",
+            textDecoration: 'none',
+            width: "70%",
+            height: "5rem",
+            display: "flex",
+            backgroundColor: "white",
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: "0.5rem"
+          }}
+          to="/usuario/editar">
+          <Text mr='9rem'>Editar Usuário</Text>
+          <FaChevronRight />
+        </Link>
 
-    const fetchUsuario = async () => {
-        try {
-            const req = await axios.get(`http://localhost:8800/getUsuario`, { 
-                headers: { Authorization: token },
-                
-            });
-            console.log(req.data);
-            const usuario = req.data;
-            setUsuario(usuario);
-        } catch (error) {
-            console.log("erro ao buscar usuário", error);
-        }
-    };
-
-    return (
-        <>
-            <Flex wrap='wrap' px='6rem' mt='4rem' justifyContent={"center"}>
-                {usuario && <CardUsuario usuario={usuario} id={usuario.id} token={token} handleLogout={handleLogout}/>}
-            </Flex>
-        </>
-    );
+      </Flex>
+    </Flex>
+  )
 }
