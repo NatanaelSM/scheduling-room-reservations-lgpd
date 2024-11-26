@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 import { ObjectId } from 'mongodb';
 import { getTermoAtual } from "../utils/getTermoAtual.js";
+import { exec } from "child_process";
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
@@ -28,11 +29,11 @@ export const getUserById = async (req, res) => {
         if (err) return res.status(401).json({ message: 'Token inválido' });
 
         try {
-            const id = decoded.id; // Supondo que o ID esteja no token JWT
+            const id = decoded.id; 
             const db = await getDB();
             const usuarios = db.collection("usuarios");
 
-            // Converte o `id` para `ObjectId` e busca pelo `_id`
+            
             const user = await usuarios.findOne({ _id: new ObjectId(id) });
             
             if (user) {
@@ -85,6 +86,24 @@ export const addUser = async (req, res) => {
 };
 
 
+
+const backupDatabase = () => {
+  return new Promise((resolve, reject) => {
+    const backupPath = "C:\\Users\\Pedro\\Documents\\ADS 5º semestre\\Segurança da informação\\scheduling-room-reservations-lgpd\\backend\\backups";
+    const command = `mongodump --uri "mongodb+srv://admin:admin123456@cluster-lgpd.qclwz.mongodb.net/" --out  "${backupPath}"`;
+    console.log("Iniciando backup com o comando:", command);
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error("Erro ao fazer backup:", stderr);
+        return reject(error);
+      }
+      console.log("Backup realizado com sucesso:", stdout);
+      resolve();
+    });
+  });
+};
+
+
 export const deleteUser = async (req, res) => {
     const token = req.headers['authorization'];
     
@@ -103,18 +122,26 @@ export const deleteUser = async (req, res) => {
         if (!currentUser) {
           return res.status(404).json({ message: "Usuário não encontrado" });
         }
-  
+        
+        console.log("Excluindo usuário...");
         const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
-  
+
+        console.log("Usuário excluído, deletando reservas...");
         await reservas.deleteOne({ _id: id });
-  
+        
+        console.log("Registrando usuário excluído...");
         await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
 
         if (deleteUserResult.deletedCount === 0) {
           return res.status(404).json({ message: "Usuário não encontrado" });
         }
+
+        console.log("Executando backup do banco de dados...");
+        await backupDatabase();
+        console.log("Backup finalizado com sucesso!");
+        
   
-        res.status(200).json({ message: "Usuário deletado com sucesso!" });
+        res.status(200).json({ message: "Usuário deletado e backup realizado com sucesso!" });
       } catch (err) {
         res.status(500).json({ message: "Erro no servidor ao deletar usuário", error: err });
       }

@@ -41,6 +41,7 @@ export function AppRoutes() {
         setToken('');
         localStorage.removeItem('token');
     }
+    
 
     return (
         <BrowserRouter>
