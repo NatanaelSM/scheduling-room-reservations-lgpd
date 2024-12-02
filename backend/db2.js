@@ -16,7 +16,7 @@ export const connectToDBKeys = async () => {
         try {
             await client.connect();
             dbKeys = client.db("db_keys");
-            console.log("Conexão estabelecida com o banco de chaves!");
+            console.log("Conexão estabelecida com o banco de chaves.");
         } catch (err) {
             console.error("Erro ao conectar ao banco de chaves:", err);
             throw err;

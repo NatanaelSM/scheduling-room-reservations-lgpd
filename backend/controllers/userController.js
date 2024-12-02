@@ -158,7 +158,7 @@ export const getUserById = async (req, res) => {
 const backupDatabase = () => {
   return new Promise((resolve, reject) => {
     const backupPath = "C:\\Users\\Pedro\\Documents\\ADS 5º semestre\\Segurança da informação\\scheduling-room-reservations-lgpd\\backend\\backups";
-    const command = `mongodump --uri "mongodb+srv://admin:admin123456@cluster-lgpd.qclwz.mongodb.net/" --out  "${backupPath}"`;
+    const command = `mongodump --uri "mongodb+srv://admin:admin123456@cluster-lgpd.qclwz.mongodb.net/" --db "db_keys" --out  "${backupPath}"`;
     console.log("Iniciando backup com o comando:", command);
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -185,7 +185,6 @@ export const deleteUser = async (req, res) => {
         const usuarios = db.collection("usuarios");
         const reservas = db.collection("reservas");
         const chaves = dbKeys.collection("keys");
-    // const usuarioApagado = db.collection("id_usuarios_apagados");
   
         const currentUser = await usuarios.findOne({ _id: new ObjectId(id) });
   
@@ -196,8 +195,6 @@ export const deleteUser = async (req, res) => {
         const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
 
         await reservas.deleteOne({ _id: id });
-        
-       // await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
 
         if (deleteUserResult.deletedCount === 0) {
           return res.status(404).json({ message: "Usuário não encontrado" });
@@ -209,9 +206,9 @@ export const deleteUser = async (req, res) => {
              console.warn(`Chave para o usuário ${id} não encontrada no bd_keys.`);
          }
 
-       // console.log("Executando backup do banco de dados...");
-       // await backupDatabase();
-       // console.log("Backup finalizado com sucesso!");
+        console.log("Executando backup do banco de dados db_keys...");
+        await backupDatabase();
+        console.log("Backup finalizado com sucesso!");
         
   
         res.status(200).json({ message: "Usuário e chave deletados com sucesso!" });
