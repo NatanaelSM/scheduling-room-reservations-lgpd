@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { getDB } from "../db.js";
+import { getDBKeys } from "../db2.js";
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -8,6 +10,90 @@ import { getTermoAtual } from "../utils/getTermoAtual.js";
 import { exec } from "child_process";
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY;
+
+// Criptografia
+
+const algoritmo = 'aes-256-cbc';
+
+const gerarChave = () => crypto.randomBytes(32);
+
+// Criptografa um texto com uma chave e IV
+const criptografar = (texto, chave) => {
+    const iv = crypto.randomBytes(16); 
+    const cipher = crypto.createCipheriv(algoritmo, chave, iv);
+    const textoCriptografado = Buffer.concat([cipher.update(texto, 'utf8'), cipher.final()]);
+    return { textoCriptografado, iv };
+};
+
+// Descriptografa um texto com uma chave e IV
+const descriptografar = (textoCriptografado, chave, iv) => {
+    const decipher = crypto.createDecipheriv(algoritmo, chave, iv);
+    const textoDescriptografado = Buffer.concat([decipher.update(textoCriptografado), decipher.final()]);
+    return textoDescriptografado.toString('utf8');
+};
+
+
+export const addUser = async (req, res) => {
+    const { nome, usuario, data_nascimento, doc_cpf, email, senha, aceite_termo_opcional_1 } = req.body;
+
+    const db = await getDB();
+    const dbKeys = await getDBKeys();
+    const usuarios = db.collection("usuarios");
+    const aceitacaoTermos = db.collection("aceitacao_termos_de_uso");
+    const chaves = dbKeys.collection("keys")
+
+    try {
+        // Criação da chave secreta
+        const secretKey = gerarChave();
+        const privateKeyString = secretKey.toString('base64');
+
+        // Criptografar os campos sensíveis
+        const camposCriptografados = {
+            nome: criptografar(nome, secretKey),
+            data_nascimento: criptografar(data_nascimento, secretKey),
+            doc_cpf: criptografar(doc_cpf, secretKey),
+            email: criptografar(email, secretKey)
+        };
+
+        // Hash da senha
+        const hash = await bcrypt.hash(senha, 10);
+
+        // Salvar chave secreta no banco
+        const usuarioCriado = await usuarios.insertOne({
+            nome: camposCriptografados.nome.textoCriptografado.toString('base64'),
+            nome_iv: camposCriptografados.nome.iv.toString('base64'),
+            data_nascimento: camposCriptografados.data_nascimento.textoCriptografado.toString('base64'),
+            data_nascimento_iv: camposCriptografados.data_nascimento.iv.toString('base64'),
+            doc_cpf: camposCriptografados.doc_cpf.textoCriptografado.toString('base64'),
+            doc_cpf_iv: camposCriptografados.doc_cpf.iv.toString('base64'),
+            email: camposCriptografados.email.textoCriptografado.toString('base64'),
+            email_iv: camposCriptografados.email.iv.toString('base64'),
+            usuario,
+            senha: hash
+        });
+
+        await chaves.insertOne({
+            usuario_id: usuarioCriado.insertedId,
+            chave: privateKeyString,
+            criadoEm: new Date()
+        });
+
+        const termoAtual = await getTermoAtual();
+
+        await aceitacaoTermos.insertOne({
+            usuario_id: usuarioCriado.insertedId,
+            versao_termo: termoAtual.versao,
+            aceite_termos_obrigatorios: true,
+            aceite_termo_opcional_1,
+            data_aceitacao: new Date()
+        });
+
+        res.status(201).send('Usuário criado com sucesso!');
+    } catch (err) {
+        console.error("Erro no banco de dados:", err);
+        res.status(500).send("Erro no servidor!");
+    }
+};
 
 export const getUsers = async (req, res) => {
 
@@ -29,68 +115,50 @@ export const getUserById = async (req, res) => {
         if (err) return res.status(401).json({ message: 'Token inválido' });
 
         try {
-            const id = decoded.id; 
+            const id = decoded.id;
             const db = await getDB();
+            const dbKeys = await getDBKeys();
             const usuarios = db.collection("usuarios");
+            const chaves = dbKeys.collection("keys");
 
-            
             const user = await usuarios.findOne({ _id: new ObjectId(id) });
-            
-            if (user) {
-                res.status(200).json(user);
-            } else {
-                res.status(404).json({ message: "Usuário não encontrado" });
+
+            if (!user) {
+                return res.status(404).json({ message: "Usuário não encontrado" });
             }
+
+            // Recuperar a chave secreta do banco
+            const chaveData = await chaves.findOne({ usuario_id: new ObjectId(id) });
+
+            if (!chaveData) {
+                return res.status(404).json({ message: "Chave de criptografia não encontrada" });
+            }
+
+            const secretKey = Buffer.from(chaveData.chave, 'base64');
+
+            // Descriptografar os campos sensíveis
+            const nome = descriptografar(Buffer.from(user.nome, 'base64'), secretKey, Buffer.from(user.nome_iv, 'base64'));
+            const data_nascimento = descriptografar(Buffer.from(user.data_nascimento, 'base64'), secretKey, Buffer.from(user.data_nascimento_iv, 'base64'));
+            const doc_cpf = descriptografar(Buffer.from(user.doc_cpf, 'base64'), secretKey, Buffer.from(user.doc_cpf_iv, 'base64'));
+            const email = descriptografar(Buffer.from(user.email, 'base64'), secretKey, Buffer.from(user.email_iv, 'base64'));
+
+            res.status(200).json({
+                ...user,
+                nome,
+                data_nascimento,
+                doc_cpf,
+                email
+            });
         } catch (err) {
             res.status(500).json({ message: "Erro ao buscar usuário", error: err });
         }
     });
 };
 
-export const addUser = async (req, res) => {
-
-    const { nome, usuario, data_nascimento, doc_cpf, email, senha, aceite_termo_opcional_1 } = req.body
-
-    const db = await getDB()
-
-    const usuarios = db.collection("usuarios")
-    const aceitacaoTermos = db.collection("aceitacao_termos_de_uso")
-
-    try {
-
-        const hash = await bcrypt.hash(senha, 10);
-        const usuarioCriado = await usuarios.insertOne({
-            nome: nome,
-            usuario: usuario,
-            data_nascimento: data_nascimento,
-            doc_cpf: doc_cpf,
-            email: email,
-            senha: hash
-        });
-
-        const termoAtual = await getTermoAtual()
-
-        await aceitacaoTermos.insertOne({
-            usuario_id: usuarioCriado.insertedId,
-            versao_termo: termoAtual.versao,
-            aceite_termos_obrigatorios: true,
-            aceite_termo_opcional_1: aceite_termo_opcional_1,
-            data_aceitacao: new Date()
-        })
-        
-        res.status(201).send('Usuário criado com sucesso!');
-    } catch (err) {
-        console.error("Erro no banco de dados:", err);
-        res.status(500).send("Erro no servidor!");
-    }
-};
-
-
-
 const backupDatabase = () => {
   return new Promise((resolve, reject) => {
     const backupPath = "C:\\Users\\Pedro\\Documents\\ADS 5º semestre\\Segurança da informação\\scheduling-room-reservations-lgpd\\backend\\backups";
-    const command = `mongodump --uri "mongodb+srv://admin:admin123456@cluster-lgpd.qclwz.mongodb.net/" --out  "${backupPath}"`;
+    const command = `mongodump --uri "mongodb+srv://admin:admin123456@cluster-lgpd.qclwz.mongodb.net/" --db "db_keys" --out  "${backupPath}"`;
     console.log("Iniciando backup com o comando:", command);
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -113,9 +181,10 @@ export const deleteUser = async (req, res) => {
       try {
         const id = decoded.id;
         const db = await getDB();
+        const dbKeys = await getDBKeys();
         const usuarios = db.collection("usuarios");
         const reservas = db.collection("reservas");
-        const usuarioApagado = db.collection("id_usuarios_apagados");
+        const chaves = dbKeys.collection("keys");
   
         const currentUser = await usuarios.findOne({ _id: new ObjectId(id) });
   
@@ -123,25 +192,26 @@ export const deleteUser = async (req, res) => {
           return res.status(404).json({ message: "Usuário não encontrado" });
         }
         
-        console.log("Excluindo usuário...");
         const deleteUserResult = await usuarios.deleteOne({ _id: new ObjectId(id) });
 
-        console.log("Usuário excluído, deletando reservas...");
         await reservas.deleteOne({ _id: id });
-        
-        console.log("Registrando usuário excluído...");
-        await usuarioApagado.insertOne({ userId: new ObjectId(id), deletedAt: new Date() });
 
         if (deleteUserResult.deletedCount === 0) {
           return res.status(404).json({ message: "Usuário não encontrado" });
         }
 
-        console.log("Executando backup do banco de dados...");
+         // Excluir a chave do banco de chaves
+         const resultadoChave = await chaves.deleteOne({ usuario_id: new ObjectId(id) });
+         if (resultadoChave.deletedCount === 0) {
+             console.warn(`Chave para o usuário ${id} não encontrada no bd_keys.`);
+         }
+
+        console.log("Executando backup do banco de dados db_keys...");
         await backupDatabase();
         console.log("Backup finalizado com sucesso!");
         
   
-        res.status(200).json({ message: "Usuário deletado e backup realizado com sucesso!" });
+        res.status(200).json({ message: "Usuário e chave deletados com sucesso!" });
       } catch (err) {
         res.status(500).json({ message: "Erro no servidor ao deletar usuário", error: err });
       }

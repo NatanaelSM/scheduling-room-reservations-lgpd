@@ -6,6 +6,7 @@ import reservaRoutes from "./routes/reservas.js";
 import bodyParser from "body-parser";
 import 'dotenv/config';
 import { databaseInit } from "./db.js";
+import {connectToDBKeys} from "./db2.js"
 
 const serverInit = () => {
     const app = express();
@@ -25,6 +26,7 @@ const serverInit = () => {
 const main = async () => {
     try {
         await databaseInit();
+        await connectToDBKeys();
         serverInit();
          
     } catch (error) {
